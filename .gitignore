@@ -6,3 +6,4 @@ data/
 backups/
 *.sqlite3*
 *.partial
+qa/results/

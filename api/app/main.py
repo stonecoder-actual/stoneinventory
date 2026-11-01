@@ -12,7 +12,8 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -106,7 +107,7 @@ async def lifespan(app):
     yield
 
 
-app = FastAPI(title="StoneInventory", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="StoneInventory", version="0.3.0", lifespan=lifespan)
 
 
 class StrictModel(BaseModel):
@@ -126,6 +127,7 @@ class Scan(Operation):
 
 class Reconcile(Operation):
     quantity: Count
+    expected_quantity: Count | None = None
 
 
 class Nutrients(StrictModel):
@@ -255,7 +257,7 @@ def resolve(barcode: Barcode):
 
 
 def operate(operation, action):
-    payload = json.dumps({**operation.model_dump(mode="json"), "operation": action}, sort_keys=True)
+    payload = json.dumps({**operation.model_dump(mode="json", exclude_none=True), "operation": action}, sort_keys=True)
     request_id = str(operation.request_id)
     # Avoid external calls on replay. Recheck under the writer lock after enrichment.
     with database() as db:
@@ -280,7 +282,10 @@ def operate(operation, action):
         before = product["quantity"]
         after = operation.quantity if action == "RECONCILE" else before + (operation.quantity if action == "ADD" else -operation.quantity)
         status = 200
-        if after < 0 or after > 1000000:
+        if action == "RECONCILE" and operation.expected_quantity is not None and before != operation.expected_quantity:
+            status = 409
+            result = {"status": "error", "detail": "Count changed since you opened this item. Review the current count and try again.", "inventory": {"before": before, "after": before}}
+        elif after < 0 or after > 1000000:
             status = 409
             result = {"status": "error", "detail": "Insufficient inventory" if after < 0 else "Quantity limit exceeded", "inventory": {"before": before, "after": before}}
         else:
@@ -308,3 +313,23 @@ def reconcile(operation: Reconcile):
 def history(barcode: Barcode):
     with database() as db:
         return [dict(row) for row in db.execute("SELECT * FROM transactions WHERE barcode=? ORDER BY id", (barcode,))]
+
+
+STATIC = Path(__file__).parent / "static"
+app.mount("/assets", StaticFiles(directory=STATIC), name="assets")
+
+
+@app.get("/", include_in_schema=False)
+def web_home():
+    return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+
+
+@app.middleware("http")
+async def browser_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    if request.url.path.startswith("/assets/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response

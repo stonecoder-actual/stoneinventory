@@ -21,3 +21,8 @@
 - Phase 2: read-only Open Food Facts v3 enrichment with permanent successful cache, retry cooldowns,
   persistent provider rate budget, and manual-data precedence. Schema v2 preserves v1 data.
 - No image downloads or nutrition/recipe calculation yet; full source product payload is retained locally.
+
+- Phase 3: responsive framework-free browser UI served by FastAPI, with no external asset dependencies.
+- Browser count corrections require review/confirmation, a same-tab persistent retry ID, and an
+  optional expected_quantity check to reject stale counts. Metadata edits remain last-writer-wins.
+- Household/LAN access and authentication remain deferred; the service stays bound to loopback.

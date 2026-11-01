@@ -1,6 +1,6 @@
 # StoneInventory
 
-Phase 2 household inventory backend, deployed to a dedicated project directory on Debian.
+Phase 3 household inventory application, deployed to a dedicated project directory on Debian.
 The server is authoritative. The laptop is only a development and SSH client.
 
 ## Run
@@ -23,7 +23,7 @@ To open the interactive API docs from the laptop, use a separate SSH session:
 ssh -L 8765:127.0.0.1:8765 YOUR_USER@YOUR_SERVER
 ```
 
-Then visit http://localhost:8765/docs. This is API documentation, not the future household web UI.
+Then visit http://localhost:8765/ for the household interface. API documentation remains at /docs.
 LAN exposure/authentication must be decided before connecting firmware or serving other devices.
 
 ## API and correctness
@@ -40,7 +40,7 @@ Barcodes are digit strings of length 8–14, preserving leading zeros. No checks
 Package counts are strict integers, 0–1,000,000. Add/remove quantities must be positive.
 A new unknown ADD creates a nameless unresolved product and increases its count.
 Unknown REMOVE cannot consume nonexistent stock. Unresolved records can be identified via the API
-now; the browser workflow comes in Phase 3. New unresolved ADD scans try Open Food Facts; known products resolve locally.
+through the browser interface. New unresolved ADD scans try Open Food Facts; known products resolve locally.
 
 Every inventory operation requires a UUID request_id. Generate it once per intentional operation,
 and reuse it for retries after timeouts or 503 responses. Repeated physical scans representing
@@ -50,7 +50,7 @@ remembered indefinitely, including insufficient-stock errors; a genuinely new at
 Malformed input rejected before an operation is not persisted.
 SQLite BEGIN IMMEDIATE serializes writers. Inventory, audit, and saved response commit together.
 RECONCILE has its own action, even when it changes nothing; its delta is never consumption.
-No consumption analytics, recipes, household web UI, or firmware are implemented yet.
+No consumption analytics, recipes, or firmware are implemented yet.
 
 Nutrition stores calories/macros, fiber, sugar, sodium, explicit measurement basis, serving size,
 servings per package, ingredients, allergens, and dietary labels. Unknown nutrition remains null.
@@ -63,3 +63,5 @@ Dependencies have tested direct pins; transitive dependencies are not yet locked
 See docs/DECISIONS.md and docs/BACKUPS.md.
 
 See [Phase 2 product lookup](docs/PRODUCT_LOOKUP.md) for caching, attribution, privacy, and offline behavior.
+
+See [browser interface](docs/WEB_UI.md) for household workflows and safe correction retries.

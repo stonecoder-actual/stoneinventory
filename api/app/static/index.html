@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#183e35"><title>StoneInventory · Your household, in order</title>
+<link rel="stylesheet" href="/assets/style.css"><script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to inventory</a>
+<aside class="sidebar">
+  <a class="brand" href="/"><span class="brand-mark">s.</span><span>stoneinventory<small>A little order. Every day.</small></span></a>
+  <p class="nav-label">YOUR HOUSEHOLD</p>
+  <nav aria-label="Main navigation">
+    <button class="nav-item selected" data-view="all"><span>▦</span> Inventory <b id="nav-all">0</b></button>
+    <button class="nav-item" data-view="low"><span>☷</span> Shopping list <b id="nav-low">0</b></button>
+    <button class="nav-item" data-view="unknown"><span>◇</span> Needs a name <b id="nav-unknown">0</b></button>
+  </nav>
+  <div class="side-note"><span class="dot"></span> A place for everything<p>Your inventory stays on your home server. Known products work without product lookup.</p></div>
+</aside>
+<div class="workspace">
+<header class="topbar"><span>HOME / <strong id="breadcrumb">INVENTORY</strong></span><button id="refresh" class="quiet">↻ Refresh</button></header>
+<main id="main">
+  <div class="heading"><div><p class="eyebrow">LESS GUESSWORK, MORE GOOD MEALS</p><h1 id="page-title">Know what’s at home.</h1><p id="page-description">Your pantry, cupboards, and everyday essentials, all in one place.</p></div><button id="new-product" class="primary">＋ Add product</button></div>
+  <div id="message" class="message" role="status" hidden></div>
+  <div id="pending-box" class="pending" hidden><div><strong>An inventory change needs a reply.</strong><p id="pending-text">Retry safely to find out whether it was saved.</p></div><button id="retry" class="primary">Retry safely</button></div>
+  <section class="stats" aria-label="Inventory overview">
+    <button data-view="all"><span>PRODUCTS AT HOME</span><strong id="stat-all">—</strong><small>Distinct products in your inventory</small></button>
+    <button data-view="low"><span>ON THE SHOPPING LIST</span><strong id="stat-low">—</strong><small>At or below your minimum count</small></button>
+    <button data-view="unknown"><span>NEED A LITTLE ATTENTION</span><strong id="stat-unknown">—</strong><small>Barcodes waiting for a name</small></button>
+  </section>
+  <section class="inventory-panel" aria-labelledby="section-title">
+    <div class="panel-top"><div><h2 id="section-title">The household shelf</h2><p id="result-count">Loading your inventory…</p></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search name, brand, or barcode" aria-label="Search inventory"></label></div>
+    <div class="filters"><div class="tabs" role="group" aria-label="Inventory filter"><button class="active" data-view="all">All products</button><button data-view="low">Low stock</button><button data-view="unknown">Unidentified</button></div><label class="sort">Sort <select id="sort"><option value="name">Name A–Z</option><option value="quantity">Count: low to high</option><option value="updated">Recently updated</option></select></label></div>
+    <div id="empty" class="empty" hidden><span class="empty-icon">▤</span><h3 id="empty-title"></h3><p id="empty-description"></p></div>
+    <div class="table-scroll"><table id="inventory-table"><thead><tr><th>PRODUCT</th><th>ON HAND</th><th>STATUS</th><th id="last-column">DETAILS</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </section>
+  <footer><span>Small habits. A well-stocked home.</span><span>Product data: <a href="https://world.openfoodfacts.org/" target="_blank" rel="noreferrer">Open Food Facts</a> · Community data; check the label.</span></footer>
+</main>
+</div>
+
+<dialog id="detail-dialog" aria-labelledby="detail-title"><div class="dialog-top"><p class="eyebrow">PRODUCT DETAILS</p><button type="button" class="close" data-close="detail-dialog" aria-label="Close product details">×</button></div>
+<div id="detail-content"></div>
+</dialog>
+
+<dialog id="edit-dialog" aria-labelledby="edit-title"><div class="dialog-top"><div><p class="eyebrow">A HOME FOR EVERY BARCODE</p><h2 id="edit-title">Product information</h2></div><button type="button" class="close" data-close="edit-dialog" aria-label="Close product editor">×</button></div>
+<form id="edit-form">
+<label>Barcode<input name="barcode" required pattern="[0-9]{8,14}" minlength="8" maxlength="14" inputmode="numeric" autocomplete="off"></label>
+<label>Product name<input name="name" required maxlength="300" placeholder="e.g. Rolled oats"></label>
+<div class="form-grid"><label>Brand<input name="brand" maxlength="200"></label><label>Package size<input name="package_size" maxlength="100" placeholder="e.g. 500 g"></label></div>
+<label>Category<input name="category" maxlength="100" placeholder="e.g. Pantry"></label>
+<div class="form-grid"><label>Minimum count<input name="minimum_quantity" type="number" min="0" max="1000000" step="1" value="0" required><small>Show on the shopping list at or below this.</small></label><label>Target count<input name="target_quantity" type="number" min="0" max="1000000" step="1" value="0" required><small>The count you want after shopping.</small></label></div>
+<details><summary>Nutrition & ingredients</summary>
+<div class="form-grid"><label>Serving size<input name="serving_size" maxlength="100" placeholder="e.g. 40 g"></label><label>Servings per package<input name="servings_per_package" type="number" min="0.000001" step="any"></label></div>
+<label>Nutrition basis<select name="basis"><option value="">No nutrition recorded</option><option value="per_serving">Per serving</option><option value="per_100g">Per 100 g</option><option value="per_100ml">Per 100 ml</option><option value="per_100g_or_100ml">Per 100 g or 100 ml (source unclear)</option></select></label>
+<div class="form-grid nutrients"><label>Calories (kcal)<input name="calories_kcal" type="number" min="0" step="any"></label><label>Protein (g)<input name="protein_g" type="number" min="0" step="any"></label><label>Carbohydrates (g)<input name="carbohydrates_g" type="number" min="0" step="any"></label><label>Fat (g)<input name="fat_g" type="number" min="0" step="any"></label><label>Fiber (g)<input name="fiber_g" type="number" min="0" step="any"></label><label>Sugars (g)<input name="sugars_g" type="number" min="0" step="any"></label><label>Sodium (mg)<input name="sodium_mg" type="number" min="0" step="any"></label></div>
+<label>Ingredients<textarea name="ingredients" maxlength="10000" rows="3"></textarea></label><label>Allergens<input name="allergens" maxlength="2000"></label><label>Dietary labels<input name="dietary_labels" maxlength="2000" placeholder="e.g. Vegan"></label>
+</details>
+<p class="hint">Saving product details keeps the inventory count and history unchanged.</p><p id="edit-error" class="form-error" role="alert"></p>
+<div class="form-actions"><button type="button" class="secondary" data-close="edit-dialog">Cancel</button><button type="submit" class="primary">Save product</button></div>
+</form></dialog>
+
+<dialog id="count-dialog" aria-labelledby="count-title"><div class="dialog-top"><div><p class="eyebrow">COUNT WHAT’S REALLY THERE</p><h2 id="count-title">Correct inventory</h2></div><button type="button" class="close" data-close="count-dialog" aria-label="Close inventory correction">×</button></div>
+<form id="count-form"><p id="count-name"></p><p class="hint">This records a correction, not a purchase or consumption.</p><label>Actual number of packages<input id="new-count" name="quantity" type="number" required min="0" max="1000000" step="1"></label><div id="count-preview" class="count-preview" aria-live="polite"></div><p id="count-error" class="form-error" role="alert"></p><div class="form-actions"><button type="button" class="secondary" data-close="count-dialog">Cancel</button><button type="submit" class="primary" id="count-submit">Review change</button></div></form></dialog>
+</body></html>

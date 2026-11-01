@@ -62,3 +62,30 @@ curl -fsS -X POST http://127.0.0.1:8765/api/products/0000000000000/resolve
 ```
 
 Provider behavior and attribution: docs/PRODUCT_LOOKUP.md.
+
+
+## Phase 3 validation
+
+- 61 API/regression tests passed, including browser asset serving/security headers, guarded
+  reconciliation conflicts, duplicate replay, pre-guard payload compatibility, and metadata preservation.
+- Isolated Chromium end-to-end suite passed with networking disabled and a temporary database.
+- Browser checks: inventory search/empty state, low-stock filter and purchase quantity, unknown
+  barcode identification, manual product creation, nutrition/threshold editing without count changes,
+  review-before-confirm correction, rejection after another device changed stock, and replay after
+  a successful response was lost followed by page reload.
+- Text resembling HTML was rendered safely as text; no injected image/script nodes were created.
+- Desktop (1440 px) and phone (390 px) screenshots inspected; no page-level horizontal overflow.
+  Phone inventory rows show name, count, and status without sideways scrolling.
+- A malformed per-serving selector found by browser QA was fixed and covered by a browser assertion.
+- Deployment keeps the existing loopback binding, SQLite schema, household data, and backup services.
+- Live root/assets/health and a fresh snapshot restoration checked after deployment.
+- Browser fixtures/screenshot output are isolated from household data; screenshots are Git-ignored.
+- Existing non-blocking Starlette/httpx deprecation warning remains.
+
+Additional commands:
+```sh
+docker build -f qa/Dockerfile -t stoneinventory-browser-tests .
+docker run --rm --network none -v "$PWD/qa/results:/results" stoneinventory-browser-tests
+```
+
+No meal-planning engine or firmware is included in this phase.
