@@ -1,0 +1,4 @@
+services:
+  api:
+    ports:
+      - "${LAN_ADDRESS:?Set LAN_ADDRESS to the server trusted LAN IPv4 address}:${PORT:-8765}:8000"

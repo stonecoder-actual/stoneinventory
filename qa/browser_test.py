@@ -46,6 +46,7 @@ with tempfile.TemporaryDirectory() as tmp:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page(viewport={"width":1440,"height":1000})
+            page.add_init_script("delete Crypto.prototype.randomUUID")
             page.on("pageerror", lambda error: (errors.append(str(error)), print("BROWSER ERROR:", error, flush=True)))
             page.goto(BASE)
             page.get_by_role("button", name="Rolled oats", exact=True).wait_for()

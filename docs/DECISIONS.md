@@ -26,3 +26,7 @@
 - Browser count corrections require review/confirmation, a same-tab persistent retry ID, and an
   optional expected_quantity check to reject stale counts. Metadata edits remain last-writer-wins.
 - Household/LAN access and authentication remain deferred; the service stays bound to loopback.
+
+- The household owner subsequently approved trusted LAN access without login. Deployment adds a
+  specific LAN IPv4 binding using an ignored override and .env while retaining loopback access.
+- No router/firewall settings changed; request IDs support plain HTTP through cryptographic UUID fallback.

@@ -89,3 +89,10 @@ docker run --rm --network none -v "$PWD/qa/results:/results" stoneinventory-brow
 ```
 
 No meal-planning engine or firmware is included in this phase.
+
+## Trusted LAN access validation
+
+- Compose merged bindings verified: loopback plus the chosen LAN IPv4 address, no wildcard bind.
+- Complete isolated browser workflow passed with randomUUID removed to exercise plain-HTTP UUID fallback.
+- Laptop connected directly over LAN: page HTTP 200 and health ok.
+- Server-specific address/configuration excluded from Git; no household data changed.

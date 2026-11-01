@@ -2,6 +2,14 @@ const $ = (selector) => document.querySelector(selector);
 const fields = ['name','brand','package_size','category','ingredients','allergens','dietary_labels','serving_size','servings_per_package','minimum_quantity','target_quantity'];
 const nutrientFields = ['calories_kcal','protein_g','carbohydrates_g','fat_g','fiber_g','sugars_g','sodium_mg'];
 let products = [], view = 'all', current = null, countProduct = null, review = false, pending = null, opening = false;
+function requestId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  // getRandomValues also works on plain HTTP within a trusted LAN.
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+  const hex = [...bytes].map(value => value.toString(16).padStart(2,'0')).join('');
+  return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+}
 const low = p => p.quantity <= p.minimum_quantity;
 const label = p => p.name || 'Unidentified product';
 function node(tag, attrs = {}, ...children) {
@@ -175,7 +183,7 @@ $('#count-form').addEventListener('submit',async event => {
   if (!review) { review = true; $('#count-submit').textContent = 'Confirm correction'; return; }
   if (pending) return;
   try {
-    savePending({body:{barcode:countProduct.barcode,quantity:Number($('#new-count').value),expected_quantity:countProduct.quantity,device_id:'household-web',request_id:crypto.randomUUID()}});
+    savePending({body:{barcode:countProduct.barcode,quantity:Number($('#new-count').value),expected_quantity:countProduct.quantity,device_id:'household-web',request_id:requestId()}});
     await sendPending();
   } catch { $('#count-error').textContent = 'Your browser could not save a safe retry token. Enable session storage before correcting inventory.'; }
 });

@@ -3,8 +3,8 @@
 The responsive interface is served at / by the same FastAPI container; /assets holds local CSS/JS.
 No frontend framework, Node runtime, CDN, external fonts, or image fetches are required.
 All reads and writes use the existing same-origin API. Inventory remains authoritative on Debian.
-Network binding is still server loopback only. Use SSH port forwarding and visit http://localhost:8765/.
-Phone/LAN access and authentication remain separate decisions, not part of this deployment.
+The default network binding is server loopback. Use SSH port forwarding and visit http://localhost:8765/.
+Optional trusted LAN access uses a deployment-specific override as described below.
 
 ## Workflows
 
@@ -57,3 +57,25 @@ docker run --rm --network none -v "$PWD/qa/results:/results" stoneinventory-brow
 
 Browser image is QA-only and not part of the running service. Screenshots in qa/results are ignored
 by Git. No sample household records are inserted into the live database by browser tests.
+
+
+## Trusted LAN access
+
+The household owner approved access without a login on the trusted local network.
+The base Compose file still defaults to loopback. To add one specific LAN IPv4 address:
+1. Copy docker-compose.lan.example.yml to docker-compose.override.yml.
+2. Set LAN_ADDRESS=YOUR_SERVER_LAN_IP in the ignored .env file.
+3. Run docker compose config to verify the bindings, then docker compose up -d.
+4. Open http://YOUR_SERVER_LAN_IP:8765 from devices on that network.
+
+Compose automatically loads this deployment override. Both loopback and the specified LAN address
+remain bound; other host interfaces are not explicitly published. The actual LAN address and override
+are excluded from Git. A hostname works only if the device can resolve it.
+No router forwarding, firewall changes, VPN configuration, or login system is added by this feature.
+Every device that can reach the service has inventory write access. LAN routing and network isolation
+remain the responsibility of the network configuration. Plain HTTP is intended only for that trusted LAN.
+If DHCP changes the server address, update LAN_ADDRESS and recreate the service; a router DHCP reservation
+can provide a stable address (not configured by this project).
+
+UUID request IDs use cryptographic random bytes when randomUUID is unavailable on plain-HTTP origins.
+The browser regression suite also exercises this fallback. Existing offline/local caching is unchanged.

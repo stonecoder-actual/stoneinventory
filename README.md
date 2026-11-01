@@ -16,7 +16,7 @@ docker compose logs --tail 100 api backup
 
 No Python installation on the host is needed except for the optional smoke script.
 Containers run as UID/GID 1000; bind-mount directories must be writable by that identity.
-The API port is deliberately published only on loopback. No authentication is implemented.
+The default API port is published only on loopback. Optional trusted LAN access is described below. No authentication is implemented.
 To open the interactive API docs from the laptop, use a separate SSH session:
 
 ```sh
@@ -24,7 +24,7 @@ ssh -L 8765:127.0.0.1:8765 YOUR_USER@YOUR_SERVER
 ```
 
 Then visit http://localhost:8765/ for the household interface. API documentation remains at /docs.
-LAN exposure/authentication must be decided before connecting firmware or serving other devices.
+Trusted household LAN access can be enabled without login when explicitly accepted; see docs/WEB_UI.md.
 
 ## API and correctness
 

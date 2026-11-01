@@ -7,3 +7,4 @@ backups/
 *.sqlite3*
 *.partial
 qa/results/
+docker-compose.override.yml
