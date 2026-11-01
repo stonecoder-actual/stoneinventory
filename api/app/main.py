@@ -3,6 +3,9 @@ import json
 import logging
 import os
 import sqlite3
+import time
+
+from app.lookup import fetch_product
 from contextlib import contextmanager, asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Literal
@@ -37,7 +40,7 @@ def initialize():
     with database() as db:
         db.execute("PRAGMA journal_mode=WAL")
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1):
+        if version not in (0, 1, 2):
             raise RuntimeError("Unsupported database schema version")
         if version == 0:
             db.executescript("""
@@ -78,7 +81,23 @@ def initialize():
                 PRAGMA user_version=1;
                 COMMIT;
             """)
-    log.info('event=database_ready schema=1')
+        if version < 2:
+            db.executescript("""
+                BEGIN IMMEDIATE;
+                CREATE TABLE product_lookups (
+                    barcode TEXT PRIMARY KEY REFERENCES products(barcode),
+                    outcome TEXT NOT NULL,
+                    next_attempt_at REAL NOT NULL,
+                    attempted_at REAL NOT NULL
+                );
+                CREATE TABLE lookup_budget (
+                    id INTEGER PRIMARY KEY CHECK(id=1), next_attempt_at REAL NOT NULL
+                );
+                INSERT INTO lookup_budget VALUES(1,0);
+                PRAGMA user_version=2;
+                COMMIT;
+            """)
+    log.info('event=database_ready schema=2')
 
 
 @asynccontextmanager
@@ -87,7 +106,7 @@ async def lifespan(app):
     yield
 
 
-app = FastAPI(title="StoneInventory", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="StoneInventory", version="0.2.0", lifespan=lifespan)
 
 
 class StrictModel(BaseModel):
@@ -111,7 +130,7 @@ class Reconcile(Operation):
 
 class Nutrients(StrictModel):
     """Values are per the stated basis. Unknown values remain null, never zero."""
-    basis: Literal["per_100g", "per_100ml", "per_serving"]
+    basis: Literal["per_100g", "per_100ml", "per_serving", "per_100g_or_100ml"]
     calories_kcal: float | None = Field(default=None, ge=0, allow_inf_nan=False)
     protein_g: float | None = Field(default=None, ge=0, allow_inf_nan=False)
     carbohydrates_g: float | None = Field(default=None, ge=0, allow_inf_nan=False)
@@ -190,9 +209,63 @@ def identify_product(barcode: Barcode, product: Product):
     return result
 
 
+def resolve_product(barcode):
+    """Reserve lookup briefly, release DB lock for network, protect manual edits."""
+    now = time.time()
+    with database() as db:
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("INSERT OR IGNORE INTO products(barcode) VALUES(?)", (barcode,))
+        db.execute("INSERT OR IGNORE INTO inventory(barcode) VALUES(?)", (barcode,))
+        product = product_view(db, barcode)
+        if not product["unresolved"] or product["manually_verified"]:
+            return {"lookup": "cached", "product": product}
+        attempt = db.execute("SELECT * FROM product_lookups WHERE barcode=?", (barcode,)).fetchone()
+        if attempt and attempt["next_attempt_at"] > now:
+            return {"lookup": attempt["outcome"], "product": product}
+        if os.environ.get("LOOKUP_ENABLED", "1") != "1":
+            db.commit()
+            return {"lookup": "disabled", "product": product}
+        budget = db.execute("SELECT next_attempt_at FROM lookup_budget WHERE id=1").fetchone()[0]
+        if budget > now:
+            db.commit()
+            return {"lookup": "deferred", "product": product}
+        # At most 12 product requests/minute in this single authoritative database.
+        db.execute("UPDATE lookup_budget SET next_attempt_at=? WHERE id=1", (now + 5,))
+        db.execute("INSERT INTO product_lookups VALUES(?,?,?,?) ON CONFLICT(barcode) DO UPDATE SET outcome=excluded.outcome,next_attempt_at=excluded.next_attempt_at,attempted_at=excluded.attempted_at",
+                   (barcode, "pending", now + 60, now))
+        db.commit()
+    outcome, fields = fetch_product(barcode)
+    with database() as db:
+        db.execute("BEGIN IMMEDIATE")
+        if fields:
+            assignments = ", ".join(f"{key}=?" for key in fields)
+            db.execute(f"UPDATE products SET {assignments}, source='openfoodfacts', source_fetched_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), unresolved=0 WHERE barcode=? AND unresolved=1 AND manually_verified=0",
+                       (*fields.values(), barcode))
+        db.execute("UPDATE product_lookups SET outcome=?,next_attempt_at=? WHERE barcode=?",
+                   (outcome, time.time() + (86400 if outcome in ("not_found", "incomplete") else 60), barcode))
+        product = product_view(db, barcode)
+        db.commit()
+    log.info("event=product_lookup barcode=%s outcome=%s source=openfoodfacts", barcode, outcome)
+    return {"lookup": outcome, "product": product}
+
+
+@app.post("/api/products/{barcode}/resolve")
+def resolve(barcode: Barcode):
+    return resolve_product(barcode)
+
+
 def operate(operation, action):
     payload = json.dumps({**operation.model_dump(mode="json"), "operation": action}, sort_keys=True)
     request_id = str(operation.request_id)
+    # Avoid external calls on replay. Recheck under the writer lock after enrichment.
+    with database() as db:
+        prior = db.execute("SELECT * FROM requests WHERE request_id=?", (request_id,)).fetchone()
+        if prior:
+            if prior["payload"] != payload:
+                raise HTTPException(409, "request_id was already used for a different operation")
+            return JSONResponse(status_code=prior["status_code"], content=json.loads(prior["response"]))
+    if action == "ADD":
+        resolve_product(operation.barcode)
     with database() as db:
         # The writer lock covers deduplication, inventory, audit log, and saved response.
         db.execute("BEGIN IMMEDIATE")

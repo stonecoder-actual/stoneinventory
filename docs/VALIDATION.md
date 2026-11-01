@@ -37,3 +37,28 @@ SCP required owner-write permissions on copied project directories before adding
 
 Remaining: off-server backups, transitive dependency lock, LAN/authentication decision before
 device access, and optional TestClient dependency modernization. Phase 2 is not started.
+
+
+## Phase 2 validation
+
+- 56 tests passed; all provider responses and network failures mocked in the automated suite.
+- Verified successful enrichment, local cache reuse, unknown and malformed responses, timeouts,
+  disconnected responses, 404/429/503 errors, negative cache, global request budget, and retry cooldown.
+- Concurrent unknown scans made one provider lookup while preserving both inventory updates.
+- Manual product edits made during lookup won over external data.
+- Replayed inventory requests returned the original result after later product identification.
+- Version 1 migration retained inventory and audit history; live database upgraded to schema 2.
+- Separate official staging integration check resolved sample barcode 3274080005003.
+- Live HTTP health and ADD/ADD/REMOVE/RECONCILE/history/replay regression passed.
+- Live resolution of a manual test product returned cached without contacting a provider.
+- Fresh deployed backup restored into an isolated temporary directory; prior history retained.
+- Existing non-blocking Starlette/httpx deprecation warning remains.
+- No household web UI, firmware, or public/LAN exposure added.
+
+Additional commands:
+```sh
+docker compose run --rm --no-deps -e PYTHONPATH=/app -e OFF_STAGING_AUTH -v "$PWD/scripts:/scripts:ro" api python /scripts/provider-check.py
+curl -fsS -X POST http://127.0.0.1:8765/api/products/0000000000000/resolve
+```
+
+Provider behavior and attribution: docs/PRODUCT_LOOKUP.md.

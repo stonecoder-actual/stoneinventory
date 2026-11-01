@@ -12,6 +12,7 @@ BARCODE = "001234567890"
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOOKUP_ENABLED", "0")
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "data" / "inventory.sqlite3"))
     with TestClient(app) as client:
         yield client

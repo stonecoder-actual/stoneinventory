@@ -17,3 +17,7 @@
 - Future reconciliation should consider stale edit conflicts if multiple people edit simultaneously.
   V1 absolute reconciliation uses the quantity at commit time and returns actual before/after.
 - Backups retain 30 most recent successful snapshots; no off-server protection yet.
+
+- Phase 2: read-only Open Food Facts v3 enrichment with permanent successful cache, retry cooldowns,
+  persistent provider rate budget, and manual-data precedence. Schema v2 preserves v1 data.
+- No image downloads or nutrition/recipe calculation yet; full source product payload is retained locally.

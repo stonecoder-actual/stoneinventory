@@ -1,6 +1,6 @@
 # StoneInventory
 
-Phase 1 household inventory backend, deployed to a dedicated project directory on Debian.
+Phase 2 household inventory backend, deployed to a dedicated project directory on Debian.
 The server is authoritative. The laptop is only a development and SSH client.
 
 ## Run
@@ -40,7 +40,7 @@ Barcodes are digit strings of length 8–14, preserving leading zeros. No checks
 Package counts are strict integers, 0–1,000,000. Add/remove quantities must be positive.
 A new unknown ADD creates a nameless unresolved product and increases its count.
 Unknown REMOVE cannot consume nonexistent stock. Unresolved records can be identified via the API
-now; the browser workflow comes in Phase 3. Local scans never call an external provider in Phase 1.
+now; the browser workflow comes in Phase 3. New unresolved ADD scans try Open Food Facts; known products resolve locally.
 
 Every inventory operation requires a UUID request_id. Generate it once per intentional operation,
 and reuse it for retries after timeouts or 503 responses. Repeated physical scans representing
@@ -50,14 +50,16 @@ remembered indefinitely, including insufficient-stock errors; a genuinely new at
 Malformed input rejected before an operation is not persisted.
 SQLite BEGIN IMMEDIATE serializes writers. Inventory, audit, and saved response commit together.
 RECONCILE has its own action, even when it changes nothing; its delta is never consumption.
-No consumption analytics, recipes, product enrichment, web UI, or firmware are implemented yet.
+No consumption analytics, recipes, household web UI, or firmware are implemented yet.
 
 Nutrition stores calories/macros, fiber, sugar, sodium, explicit measurement basis, serving size,
 servings per package, ingredients, allergens, and dietary labels. Unknown nutrition remains null.
-The schema reserves source payload, source ID, image, and fetched timestamp for later enrichment.
+Open Food Facts enrichment retains the source payload, source ID, image URL, and fetched timestamp locally.
 Package counts alone do not measure individual servings eaten. Nutrition/recipe calculations are
 future work. Product metadata uses full replacement via PUT; supply fields you want to retain.
 
-Schema v1 uses SQLite user_version; new versions must add explicit migrations, never recreate data.
+Schema v2 uses SQLite user_version and migrates existing v1 databases without replacing inventory/history.
 Dependencies have tested direct pins; transitive dependencies are not yet locked.
 See docs/DECISIONS.md and docs/BACKUPS.md.
+
+See [Phase 2 product lookup](docs/PRODUCT_LOOKUP.md) for caching, attribution, privacy, and offline behavior.

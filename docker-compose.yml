@@ -7,6 +7,9 @@ services:
       - "127.0.0.1:${PORT:-8765}:8000"
     environment:
       DATABASE_PATH: /data/inventory.sqlite3
+      LOOKUP_ENABLED: ${LOOKUP_ENABLED:-1}
+      OFF_STAGING: ${OFF_STAGING:-0}
+      OFF_STAGING_AUTH: ${OFF_STAGING_AUTH:-}
     volumes:
       - ./data:/data
     healthcheck:
