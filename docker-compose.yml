@@ -1,0 +1,29 @@
+name: stoneinventory
+services:
+  api:
+    build: ./api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PORT:-8765}:8000"
+    environment:
+      DATABASE_PATH: /data/inventory.sqlite3
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  backup:
+    build: ./api
+    restart: unless-stopped
+    command: ["python", "-m", "app.backup", "--loop"]
+    environment:
+      DATABASE_PATH: /data/inventory.sqlite3
+      BACKUP_DIR: /backups
+    volumes:
+      - ./data:/data
+      - ./backups:/backups
+    depends_on:
+      api:
+        condition: service_healthy
