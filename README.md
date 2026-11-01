@@ -65,3 +65,5 @@ See docs/DECISIONS.md and docs/BACKUPS.md.
 See [Phase 2 product lookup](docs/PRODUCT_LOOKUP.md) for caching, attribution, privacy, and offline behavior.
 
 See [browser interface](docs/WEB_UI.md) for household workflows and safe correction retries.
+
+CYD firmware and first-flash guide: [firmware/cyd/README.md](firmware/cyd/README.md).

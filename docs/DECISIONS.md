@@ -30,3 +30,8 @@
 - The household owner subsequently approved trusted LAN access without login. Deployment adds a
   specific LAN IPv4 binding using an ignored override and .env while retaining loopback access.
 - No router/firewall settings changed; request IDs support plain HTTP through cryptographic UUID fallback.
+
+- Firmware prototype: common resistive CYD ILI9341 + XPT2046 profile, pinned PlatformIO dependencies,
+  diagnostics as the default first-flash target, separate manual-barcode inventory terminal.
+- Bluetooth scanner compatibility and physical display/touch/Wi-Fi validation remain pending.
+- Compile-only verification on Debian does not access USB; upload/serial work stays on Windows.

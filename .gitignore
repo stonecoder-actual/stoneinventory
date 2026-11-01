@@ -8,3 +8,6 @@ backups/
 *.partial
 qa/results/
 docker-compose.override.yml
+firmware/cyd/.pio/
+firmware/cyd/.vscode/
+firmware/cyd/include/stoneinventory_config.h

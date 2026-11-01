@@ -96,3 +96,13 @@ No meal-planning engine or firmware is included in this phase.
 - Complete isolated browser workflow passed with randomUUID removed to exercise plain-HTTP UUID fallback.
 - Laptop connected directly over LAN: page HTTP 200 and health ok.
 - Server-specific address/configuration excluded from Git; no household data changed.
+
+## CYD firmware compile verification
+
+- cyd-diagnostics compiled successfully: 319497 bytes flash, 23028 bytes static RAM.
+- cyd-terminal compiled successfully: 845149 bytes flash, 47492 bytes static RAM.
+- Pinned Espressif32 6.10.0 / Arduino ESP32 2.0.17, TFT_eSPI 2.5.43, ArduinoJson 6.21.5, upstream XPT2046 commit.
+- Touch uses its own VSPI bus; display uses HSPI.
+- Expected TFT_eSPI warning: its built-in touch feature is disabled; XPT2046 is used instead.
+- No firmware uploaded yet; physical behavior and scanner transport remain unverified.
+- No backend, inventory, or database changes made for firmware compilation.

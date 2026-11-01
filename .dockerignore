@@ -4,3 +4,6 @@
 data
 backups
 qa/results
+firmware/cyd/include/stoneinventory_config.h
+firmware/cyd/.pio
+firmware/cyd/.vscode
