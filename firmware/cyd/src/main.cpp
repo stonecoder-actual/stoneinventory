@@ -186,7 +186,7 @@ void bluetoothTask(void*) {
   if(!btReady) { vTaskDelete(nullptr);return; }
   Serial.println("Bluetooth SPP started; searching for configured scanner.");
   for(;;) {
-    if(!scanner.connected(0)) {
+    if(!(btReady && scanner.connected(0))) {
       Serial.println("Connecting scanner (SPP mode required).");
       if(strlen(INVENTORY_SCANNER_MAC)) {
         uint8_t mac[6];int used=0;
@@ -310,7 +310,7 @@ void keypad() {
 }
 void draw() {
 #if !DIAGNOSTICS_ONLY
-  String bt=scanner.connected(0)?"BT connected":btAuthFailed?"BT pairing failed":"BT searching";
+  String bt=(btReady && scanner.connected(0))?"BT connected":btAuthFailed?"BT pairing failed":"BT searching";
   if(screen==HOME) {
     title("STONEINVENTORY",WiFi.status()==WL_CONNECTED?"Wi-Fi connected":"Wi-Fi not connected");
     lcd.drawString(bt,10,50,2);
@@ -378,6 +378,7 @@ void tap(int id) {
 }
 void setup() {
   Serial.begin(115200);delay(300);
+  Serial.printf("StoneInventory boot: diagnostics=%d scanner_test=%d reset=%d\n", DIAGNOSTICS_ONLY, SCANNER_TEST_ONLY, int(esp_reset_reason()));
   lcd.init();lcd.setRotation(1);digitalWrite(21,HIGH);
   touchSpi.begin(25,39,32,33);touch.begin(touchSpi);touch.setRotation(1);
 #if DIAGNOSTICS_ONLY
@@ -399,6 +400,7 @@ void setup() {
     if(xTaskCreate(networkTask,"inventory-http",12288,nullptr,1,nullptr)!=pdPASS){storageFault=true;screen=WAITING;}
   }
   if(xTaskCreate(bluetoothTask,"scanner-spp",6144,nullptr,1,nullptr)!=pdPASS){title("Bluetooth task failed","Restart and contact support.");while(true)delay(1000);}
+  Serial.println("Startup complete; drawing interface.");
   draw();
 #endif
 }
@@ -411,7 +413,7 @@ void loop() {
   }
 #else
   static bool wasWifi=false,wasBt=false,wasAuth=false,wasReady=false;
-  bool wifi=WiFi.status()==WL_CONNECTED,bt=scanner.connected(0);
+  bool wifi=WiFi.status()==WL_CONNECTED,bt=(btReady && scanner.connected(0));
   if(bt!=wasBt){wasBt=bt;framer.reset();Serial.println(bt?"Scanner connected":"Scanner disconnected");draw();}
   if(wifi!=wasWifi){wasWifi=wifi;draw();}
   if(wasAuth!=btAuthFailed || wasReady!=btReady){wasAuth=btAuthFailed;wasReady=btReady;draw();}

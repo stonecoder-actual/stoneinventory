@@ -124,3 +124,15 @@ No meal-planning engine or firmware is included in this phase.
 - Remaining physical checks: SPP pairing/authentication, scanner suffix/framing, actual successive
   scans, Wi-Fi/Bluetooth loss/reconnect, server outage, power loss with pending operations,
   and terminal behavior while adding/removing/reconciling stock.
+
+## Bluetooth startup crash fix
+
+- Physical board boot log reproduced xEventGroupWaitBits assertion and repeated reboot.
+- Arduino ESP32 2.0.17 BluetoothSerial::connected accesses an event group without a null guard.
+- All connection-status calls are now short-circuited until BluetoothSerial::begin succeeds.
+- Added boot mode/reset marker and startup-complete serial diagnostics.
+- All three firmware environments compiled successfully.
+- Corrected cyd-scanner-test uploaded over local Windows USB and flash hash verification passed.
+- Physical board then completed one boot, started SPP, and searched for the scanner; no assertion
+  or reboot loop appeared during a 12-second post-reset serial observation.
+- Scanner pairing remains unverified. Scanner-test does not issue inventory operations.
