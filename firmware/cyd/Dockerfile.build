@@ -1,4 +1,4 @@
 FROM python:3.11-slim
 RUN pip install --no-cache-dir platformio==6.1.18
 WORKDIR /project
-CMD ["pio", "run", "-e", "cyd-diagnostics", "-e", "cyd-terminal"]
+CMD ["pio", "run", "-e", "cyd-diagnostics", "-e", "cyd-scanner-test", "-e", "cyd-terminal"]

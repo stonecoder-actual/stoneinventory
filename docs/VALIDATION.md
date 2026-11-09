@@ -106,3 +106,21 @@ No meal-planning engine or firmware is included in this phase.
 - Expected TFT_eSPI warning: its built-in touch feature is disabled; XPT2046 is used instead.
 - No firmware uploaded yet; physical behavior and scanner transport remain unverified.
 - No backend, inventory, or database changes made for firmware compilation.
+
+
+## Bluetooth scanner integration
+
+- All three environments compiled locally on Windows: cyd-diagnostics (318361 bytes flash),
+  cyd-scanner-test (1160677 bytes), and cyd-terminal (1610193 bytes).
+- Native C++ parser/outbox tests passed on Debian: split frames, CRLF, leading zeros,
+  repeated products, invalid and oversized frames, persisted FIFO ordering, reboot replay,
+  failed storage, mismatched acknowledgements, and full-capacity rejection.
+- New SPP scanner test makes no API calls or inventory writes; physical pairing is pending.
+- Terminal uses background Bluetooth connection and HTTP tasks, a bounded byte receive queue,
+  and a durable eight-operation outbox. Queue/receive/storage failures pause with explicit feedback.
+- Standard huge_app table increases app space to 3 MB while retaining the existing NVS offset/size.
+- Existing private Wi-Fi configuration was not read, changed, uploaded, or committed.
+- No firmware was flashed automatically and no household inventory operations were performed.
+- Remaining physical checks: SPP pairing/authentication, scanner suffix/framing, actual successive
+  scans, Wi-Fi/Bluetooth loss/reconnect, server outage, power loss with pending operations,
+  and terminal behavior while adding/removing/reconciling stock.

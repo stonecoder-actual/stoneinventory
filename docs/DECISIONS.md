@@ -35,3 +35,9 @@
   diagnostics as the default first-flash target, separate manual-barcode inventory terminal.
 - Bluetooth scanner compatibility and physical display/touch/Wi-Fi validation remain pending.
 - Compile-only verification on Debian does not access USB; upload/serial work stays on Windows.
+
+- Scanner arrival: Bluetooth Classic/SPP master connects to NETUM by configured name or exact MAC.
+- Continuous ADD/REMOVE uses a persisted eight-request FIFO and background HTTP worker. Scanner test
+  performs no inventory/API writes. Error/overflow recovery requires resuming and rescanning rejected items.
+- New Bluetooth builds use huge_app with unchanged NVS location; old pending records load safely.
+- Physical pairing and rapid-scan/outage acceptance remain to be verified with the household scanner.

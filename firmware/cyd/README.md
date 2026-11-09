@@ -43,9 +43,10 @@ accidentally flashing an inventory writer for your first hardware test.
 On first boot, tap each calibration cross. Calibration is retained in ESP32 nonvolatile storage.
 Home CAL repeats calibration. There is no SD card dependency.
 
-ADD/REMOVE: select action, type the full numeric barcode including leading zeros, press ENTER.
+ADD/REMOVE: select action once, then scan successive barcodes. Brief confirmations return to scan-ready mode.
+MANUAL opens numeric entry as a fallback. Each accepted scan adds/removes one package.
 These are REAL inventory operations, quantity one. Unknown ADD retains count and flags the barcode.
-EDIT COUNT: type barcode, read current count, enter actual quantity, REVIEW then CONFIRM.
+EDIT COUNT: scan a barcode (or choose MANUAL), read current count, enter actual quantity, REVIEW then CONFIRM.
 EDIT sends RECONCILE plus the count observed when editing began. Stale edits are rejected.
 Only Debian decides counts; the firmware never maintains authoritative inventory.
 
@@ -54,7 +55,8 @@ storage. Lost reply/Wi-Fi failure/reboot displays RETRY SAFELY and reuses the sa
 Do not rescan an item whose previous operation is pending. Successful or definitive 4xx replies clear
 the pending request; a timeout, malformed reply, or server failure preserves it.
 Flashing the app normally retains this nonvolatile storage; do not erase flash to resolve a pending request.
-No automatic offline inventory queue or Bluetooth implementation is included yet.
+Bluetooth SPP input and an eight-request durable queue are now available. See BLUETOOTH.md before first pairing.
+Accepted requests survive reboot. New scans pause on server failure or queue overflow; rejected scans must be rescanned.
 
 Product responses are parsed with a streaming JSON filter to avoid loading full cached source payloads.
 HTTP uses the trusted LAN service. Firmware cannot contact Open Food Facts directly.
@@ -69,7 +71,7 @@ docker run --rm -v "$PWD/firmware/cyd:/project" -v stoneinventory-pio-cache:/roo
 ```
 
 Physical display, touch, Wi-Fi, and scan behavior must still be verified on the board.
-Scanner Bluetooth Classic/SPP compatibility is pending physical NETUM testing.
+Bluetooth Classic/SPP is implemented and compile-tested; physical NETUM pairing is the next validation step.
 
 Hardware references:
 - https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display

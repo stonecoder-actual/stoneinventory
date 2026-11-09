@@ -1,6 +1,6 @@
-# Scanner integration: next hardware milestone
+# Scanner integration: Bluetooth implementation and physical validation
 
-Deferred until the NETUM scanner arrives.
+The NETUM scanner has arrived. Bluetooth Classic/SPP input and continuous modes are implemented; physical pairing and end-to-end validation are the next step.
 
 Required ADD behavior:
 - Select ADD once and remain in ADD mode until the user exits explicitly.
@@ -11,6 +11,6 @@ Required ADD behavior:
 - Pause acceptance while an operation is pending or show a clear busy/error state; do not silently lose scans.
 - Validate rapid repeated scans, Wi-Fi/server outages, reconnection, power loss with a pending operation, and unknown products.
 
-First establish scanner Bluetooth compatibility (SPP preferred if supported). The existing manual-entry prototype does not implement continuous scanning. Do not change ADD behavior ahead of the scanner task solely to mark this requirement complete.
+First establish scanner Bluetooth compatibility (SPP preferred if supported). The terminal now supports continuous ADD and REMOVE, with manual entry retained as a fallback. See firmware/cyd/BLUETOOTH.md for setup and explicit error recovery.
 
 Hardware progress reported by the user: diagnostic display/touch test passed; terminal Wi-Fi and reading product/count from Debian passed. Scanner transport and continuous scanning are not yet verified.
